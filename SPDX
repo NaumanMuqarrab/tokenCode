@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+interface IERC20 {
+    function transfer(address recipient, uint256 amount) external returns (bool);
+    function balanceOf(address account) external view returns (uint256);
+}
+
+contract FakeTokenCEX {
+    string public name = "FakeTokenCEX";
+    string public symbol = "FTC";
+    uint8 public decimals = 18;
+    uint256 public totalSupply = 1000000 * 10**18;
+    mapping(address => uint256) public balanceOf;
+    
+    constructor() {
+        balanceOf[msg.sender] = totalSupply;  // Attacker gets all fake tokens
+    }
+
+    // Function to simulate token transfer to CEX
+    function transfer(address recipient, uint256 amount) public returns (bool) {
+        require(balanceOf[msg.sender] >= amount, "Insufficient balance");
+        balanceOf[msg.sender] -= amount;
+        balanceOf[recipient] += amount;
+        return true;
+    }
+    
+    // Function to simulate fake token deposit into CEX
+    function depositToCEX(address cexAddress, uint256 amount) public {
+        require(transfer(cexAddress, amount), "Transfer failed");
+    }
+}
+
+// Attacker deposits fake tokens into the CEX without any address verification.
+// This exploits Logic L: CEXs do not verify contract addresses during deposits.
